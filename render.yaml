@@ -1,15 +1,19 @@
 services:
   - type: web
-    name: scie-backend
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: ANTHROPIC_API_KEY
-        sync: false
-      - key: LOG_LEVEL
-        value: INFO
-      - key: MAX_PAGES_PER_SUPPLIER
-        value: 5
-      - key: CRAWL_DELAY_SECONDS
-        value: "1.0"
+      name: scie-backend
+          runtime: python
+              buildCommand: pip install -r requirements.txt
+                  startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+                      envVars:
+                            - key: GEMINI_API_KEY
+                                    sync: false
+                                          - key: ANTHROPIC_API_KEY
+                                                  sync: false
+                                                        - key: LOG_LEVEL
+                                                                value: INFO
+                                                                      - key: MAX_PAGES_PER_SUPPLIER
+                                                                              value: 5
+                                                                                    - key: CRAWL_DELAY_SECONDS
+                                                                                            value: "1.0"
+                                                                                                  - key: BATCH_SIZE
+                                                                                                          value: 3
