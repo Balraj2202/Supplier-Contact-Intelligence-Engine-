@@ -111,19 +111,19 @@ async def fetch_pages(base_url: str, max_pages: int = 5) -> List[Dict[str, str]]
                       if url in visited:
                                         continue
 
-                      page = await _fetch_page(client, url)
-                      if page:
-                                        pages.append(page)
-                                        visited.add(url)
+            page = await _fetch_page(client, url)
+            if page:
+                              pages.append(page)
+                              visited.add(url)
 
-              logger.info(f"Fetched {len(pages)} pages from {base_url}")
+    logger.info(f"Fetched {len(pages)} pages from {base_url}")
     return pages
 
 
 async def _fetch_page(client: httpx.AsyncClient, url: str) -> Optional[Dict[str, str]]:
       """Fetch a single page and extract its text content."""
     try:
-              resp = await client.get(url)
+        resp = await client.get(url)
         if resp.status_code >= 400:
                       return None
 
