@@ -121,4 +121,69 @@ async def _extract_with_claude(prompt: str) -> str:
       headers = {
           "x-api-key": settings.anthropic_api_key,
           "anthropic-version": "2023-06-01",
-          "content-type": 
+          "content-type": "application/json",
+      }
+      payload = {
+          "model": settings.anthropic_model,
+          "max_tokens": 4096,
+          "messages": [{"role": "user", "content": prompt}],
+      }
+      async with httpx.AsyncClient(timeout=60) as client:
+                resp = await client.post(
+                              "https://api.anthropic.com/v1/messages",
+                              headers=headers,
+                              json=payload,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                return data["content"][0]["text"]
+
+
+def _parse_ai_response(
+      raw_text: str,
+      supplier: SupplierInput,
+      website_url: str,
+) -> SupplierContact:
+      """Parse the AI JSON response into a SupplierContact object."""
+      # Strip markdown code fences if present
+      text = raw_text.strip()
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+
+    try:
+              data = json.loads(text)
+except json.JSONDecodeError as e:
+          logger.warning(f"Could not parse AI JSON response: {e}")
+          return SupplierContact(
+              supplier_name=supplier.supplier_name,
+              website=website_url,
+              country=supplier.country,
+              category=supplier.category,
+              notes=f"AI returned invalid JSON: {e}",
+          )
+
+    # Parse contacts list
+      contacts = []
+    for c in data.get("contacts", []):
+              if isinstance(c, dict):
+                            contacts.append(ContactPerson(
+                                              name=c.get("name"),
+                                              title=c.get("title"),
+                                              email=c.get("email"),
+                                              phone=c.get("phone"),
+                                              linkedin=c.get("linkedin"),
+                                              department=c.get("department"),
+                            ))
+
+          return SupplierContact(
+                    supplier_name=supplier.supplier_name,
+                    website=data.get("website") or website_url,
+                    country=supplier.country,
+                    category=supplier.category,
+                    contacts=contacts,
+                    general_email=data.get("general_email"),
+                    general_phone=data.get("general_phone"),
+                    headquarters_address=data.get("headquarters_address"),
+                    confidence_score=float(data.get("confidence_score", 0.0)),
+                    notes=data.get("notes"),
+          )
